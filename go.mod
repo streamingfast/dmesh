@@ -3,9 +3,9 @@ module github.com/dfuse-io/dmesh
 go 1.13
 
 require (
-	github.com/dfuse-io/dgrpc develop
-	github.com/dfuse-io/dmetrics develop
-	github.com/dfuse-io/logging develop
+	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
+	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
+	github.com/dfuse-io/logging v0.0.0-20200406213449-45fc25dc6a8d
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/uuid v1.1.1 // indirect
