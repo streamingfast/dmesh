@@ -12,22 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package store
 
 import (
-	"time"
-
-	"github.com/dfuse-io/dmesh"
+	"github.com/dfuse-io/logging"
+	"go.uber.org/zap"
 )
 
-type Client interface {
-	PublishWithin(peer dmesh.Peer, timeout time.Duration)
-	PublishNow(peer dmesh.Peer) error
-}
+var zlog *zap.Logger
 
-type SearchClient interface {
-	Client
-	Peers() (out []*dmesh.SearchPeer)
-	Start() error
-	Close() error
+func init() {
+	logging.Register("github.com/dfuse-io/dmesh/store", &zlog)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package etcd
 
 import (
 	"github.com/dfuse-io/logging"
@@ -22,5 +22,5 @@ import (
 var zlog *zap.Logger
 
 func init() {
-	logging.Register("github.com/dfuse-io/dmesh/client", &zlog)
+	logging.Register("github.com/dfuse-io/dmesh/store/etcd", &zlog)
 }

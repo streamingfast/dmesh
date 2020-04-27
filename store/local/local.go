@@ -12,29 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package local
 
 import (
+	"context"
 	"sync"
 	"time"
 
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmesh"
+	"github.com/dfuse-io/dmesh/store"
 	"go.uber.org/zap"
 )
+
+func init() {
+	store.Register(&store.Registration{
+		Name:        "local",
+		Title:       "local",
+		FactoryFunc: New,
+	})
+
+}
 
 type Local struct {
 	allPeers     map[string]dmesh.Peer
 	allPeersLock sync.RWMutex
 }
 
-func NewLocalClient() SearchClient {
+// DNS example: `local://`
+func New(dsnString string) (store.SearchClient, error) {
 	return &Local{
 		allPeers: map[string]dmesh.Peer{},
-	}
+	}, nil
 }
 
-func (l *Local) Start() error {
+func (l *Local) Start(ctx context.Context, watchServices []string) error {
 	return nil
 }
 

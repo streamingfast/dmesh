@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package etcd
 
 import (
 	"context"
@@ -26,38 +26,32 @@ import (
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmesh"
 	"github.com/dfuse-io/dmesh/metrics"
+	"github.com/dfuse-io/dmesh/store"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.uber.org/zap"
 )
 
+
+func init() {
+	store.Register(&store.Registration{
+		Name:        "etcd",
+		Title:       "etcd",
+		FactoryFunc: New,
+	})
+}
+
 // var DefaultDialer grpc.DialerFunc
 // send list of peers and an interface
 
 var logCount = 0
 var DefaultPeerPublishInterval = 1 * time.Second
-
-func NewEtcdStore(storeAddr string) (*clientv3.Client, error) {
-	return clientv3.New(clientv3.Config{
-		Endpoints:   []string{storeAddr},
-		DialTimeout: 10 * time.Second,
-	})
-}
-
-//TODO: find a better name
-type peerPublish struct {
-	publishWithinCh chan time.Duration
-	publishInterval time.Duration
-}
-
-func (p *peerPublish) publishWithin(dur time.Duration) {
-	p.publishWithinCh <- dur
-}
+var DefaultGrantTTL = 5
 
 type Etcd struct {
 	ctx             context.Context
-	store           *clientv3.Client
+	client          *clientv3.Client
 	initialRevision int64
 	localIP         string
 
@@ -73,25 +67,81 @@ type Etcd struct {
 	regsiteredPeers map[string]*peerPublish
 }
 
-func NewEtcd(ctx context.Context, namespacePrefix string, store *clientv3.Client, watchServices []string) *Etcd {
-	services, err := dmesh.ValidateServiceList(watchServices)
+// DNS example: `etcd://etcd.dmesh:2379/eos-dev1`
+// DNS example: `etcd://<etcd-host>:<etcd-port>/<etcd-namespace>`
+func New(dsnString string) (store.SearchClient, error) {
+	addr, nspace, err := ParseDSN(dsnString)
 	if err != nil {
-		panic(fmt.Sprintf("invalid services watch list: %s", err))
+		return nil, fmt.Errorf("invalid dsn: %w", err)
 	}
 
-	namespacePrefix = fmt.Sprintf("/%s", namespacePrefix)
-	store.KV = namespace.NewKV(store.KV, namespacePrefix)
-	store.Watcher = namespace.NewWatcher(store.Watcher, namespacePrefix)
-	store.Lease = namespace.NewLease(store.Lease, namespacePrefix)
+	etcdClient, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{addr},
+		DialTimeout: 10 * time.Second,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to crate etcd client: %w", err)
+	}
+
+	zlog.Debug("setting up etcd client", zap.String("etcd_addr", addr), zap.String("etcd_namespace", nspace))
+	etcdClient.KV = namespace.NewKV(etcdClient.KV, nspace)
+	etcdClient.Watcher = namespace.NewWatcher(etcdClient.Watcher, nspace)
+	etcdClient.Lease = namespace.NewLease(etcdClient.Lease, nspace)
 
 	return &Etcd{
-		ctx:             ctx,
-		store:           store,
+		client:          etcdClient,
 		localIP:         dmesh.GetLocalIP(),
 		allPeers:        map[string]dmesh.Peer{},
 		regsiteredPeers: map[string]*peerPublish{},
-		watchServices:   services,
+	}, nil
+}
+
+func (d *Etcd) Start(ctx context.Context, watchServices []string) error {
+	if ctx == nil {
+		ctx = context.Background()
 	}
+
+	services, err := dmesh.ValidateServiceList(watchServices)
+	if err != nil {
+		return fmt.Errorf("invalid services watch list: %s", err)
+	}
+	d.ctx = ctx
+	d.watchServices = services
+
+	ttl := int64(5)
+	if os.Getenv("DMESH_GRANT_TTL") != "" {
+		ttl, _ = strconv.ParseInt(os.Getenv("DMESH_GRANT_TTL"), 10, 64)
+	}
+
+	d.leaseTTL = ttl
+
+	if err := d.setupGrant(); err != nil {
+		return err
+	}
+
+	if err := d.fetchCurrentState(); err != nil {
+		return err
+	}
+
+	d.watchUpdates()
+
+	return nil
+}
+
+func (d *Etcd) Close() error {
+	// TODO: close
+	return d.client.Close()
+}
+
+
+//TODO: find a better name
+type peerPublish struct {
+	publishWithinCh chan time.Duration
+	publishInterval time.Duration
+}
+
+func (p *peerPublish) publishWithin(dur time.Duration) {
+	p.publishWithinCh <- dur
 }
 
 func (d *Etcd) Peers() (out []*dmesh.SearchPeer) {
@@ -138,12 +188,12 @@ func (d *Etcd) PublishNow(peer dmesh.Peer) error {
 		return fmt.Errorf("error marshaling peer %q: %s", peerKey, err)
 	}
 
-	_, err = d.store.Put(d.ctx, peerKey, string(bytes), clientv3.WithLease(d.leaseID))
+	_, err = d.client.Put(d.ctx, peerKey, string(bytes), clientv3.WithLease(d.leaseID))
 	if err != nil && err == rpctypes.ErrLeaseNotFound {
 		if err := d.setupGrant(); err != nil {
 			return fmt.Errorf("setup grants under failed put: %s", err)
 		}
-		_, err = d.store.Put(d.ctx, peerKey, string(bytes), clientv3.WithLease(d.leaseID))
+		_, err = d.client.Put(d.ctx, peerKey, string(bytes), clientv3.WithLease(d.leaseID))
 	}
 	if err != nil {
 		return err
@@ -186,31 +236,6 @@ func (d *Etcd) register(peer dmesh.Peer) (pp *peerPublish) {
 	return pp
 }
 
-func (d *Etcd) Start() error {
-	ttl := int64(5)
-	if os.Getenv("DMESH_GRANT_TTL") != "" {
-		ttl, _ = strconv.ParseInt(os.Getenv("DMESH_GRANT_TTL"), 10, 64)
-	}
-
-	d.leaseTTL = ttl
-
-	if err := d.setupGrant(); err != nil {
-		return err
-	}
-
-	if err := d.fetchCurrentState(); err != nil {
-		return err
-	}
-
-	d.watchUpdates()
-
-	return nil
-}
-
-func (d *Etcd) Close() error {
-	// TODO: close
-	return d.store.Close()
-}
 
 // blocking call that periodically publishes the given peer
 func (d *Etcd) launchPeerPublishing(peer dmesh.Peer, peerPublish *peerPublish) {
@@ -240,7 +265,7 @@ func (d *Etcd) setupGrant() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	grant, err := d.store.Grant(ctx, d.leaseTTL)
+	grant, err := d.client.Grant(ctx, d.leaseTTL)
 	if err != nil {
 		return fmt.Errorf("couldn't create grant: %s", err)
 	}
@@ -249,7 +274,7 @@ func (d *Etcd) setupGrant() error {
 		zap.String("error", grant.Error),
 		zap.Int64("ttl", grant.TTL))
 
-	keepAliveChan, err := d.store.KeepAlive(ctx, grant.ID)
+	keepAliveChan, err := d.client.KeepAlive(ctx, grant.ID)
 	if err != nil {
 		return fmt.Errorf("setup keep alive: %s", err)
 	}
@@ -265,7 +290,7 @@ func (d *Etcd) setupGrant() error {
 func (d *Etcd) fetchCurrentState() error {
 	for _, servicePrefix := range d.watchServices {
 		zlog.Debug("fetching current state", zap.String("prefix", servicePrefix))
-		resp, err := d.store.Get(d.ctx, servicePrefix, clientv3.WithPrefix())
+		resp, err := d.client.Get(d.ctx, servicePrefix, clientv3.WithPrefix())
 		if err != nil {
 			return err
 		}
@@ -299,7 +324,7 @@ func (d *Etcd) watchUpdates() {
 			// restarted when it fails. Or does it need? Would it
 			// simply retry and continue from where it left off?!
 
-			for wresp := range d.store.Watch(d.ctx, servicePrefix, clientv3.WithPrefix(), clientv3.WithRev(initRev)) {
+			for wresp := range d.client.Watch(d.ctx, servicePrefix, clientv3.WithPrefix(), clientv3.WithRev(initRev)) {
 				if wresp.Err() != nil {
 					zlog.Error("failed to track watching", zap.Error(wresp.Err()))
 					// TODO: make this KILL the whole system?! What,s the failure condition of `Watch.Err()` ?
