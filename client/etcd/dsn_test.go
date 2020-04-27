@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,9 @@ func TestParseDSN(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			addr, namespace, err := ParseDSN(test.dsn)
+			dnsURL, err := url.Parse(test.dsn)
+			require.NoError(t, err)
+			addr, namespace, err := ParseDSNURL(dnsURL)
 			if test.expectError {
 				require.Error(t, err)
 			} else {

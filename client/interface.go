@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package store
+package client
 
 import (
 	"context"
@@ -32,3 +32,5 @@ type SearchClient interface {
 	Start(ctx context.Context, watchServices []string) error
 	Close() error
 }
+
+

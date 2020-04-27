@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"sync"
@@ -26,21 +27,12 @@ import (
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmesh"
 	"github.com/dfuse-io/dmesh/metrics"
-	"github.com/dfuse-io/dmesh/store"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.uber.org/zap"
 )
 
-
-func init() {
-	store.Register(&store.Registration{
-		Name:        "etcd",
-		Title:       "etcd",
-		FactoryFunc: New,
-	})
-}
 
 // var DefaultDialer grpc.DialerFunc
 // send list of peers and an interface
@@ -69,8 +61,8 @@ type Etcd struct {
 
 // DNS example: `etcd://etcd.dmesh:2379/eos-dev1`
 // DNS example: `etcd://<etcd-host>:<etcd-port>/<etcd-namespace>`
-func New(dsnString string) (store.SearchClient, error) {
-	addr, nspace, err := ParseDSN(dsnString)
+func New(dsnURL *url.URL) (*Etcd, error) {
+	addr, nspace, err := ParseDSNURL(dsnURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid dsn: %w", err)
 	}

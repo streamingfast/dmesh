@@ -16,23 +16,14 @@ package local
 
 import (
 	"context"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/dfuse-io/dgrpc"
 	"github.com/dfuse-io/dmesh"
-	"github.com/dfuse-io/dmesh/store"
 	"go.uber.org/zap"
 )
-
-func init() {
-	store.Register(&store.Registration{
-		Name:        "local",
-		Title:       "local",
-		FactoryFunc: New,
-	})
-
-}
 
 type Local struct {
 	allPeers     map[string]dmesh.Peer
@@ -40,7 +31,7 @@ type Local struct {
 }
 
 // DNS example: `local://`
-func New(dsnString string) (store.SearchClient, error) {
+func New(dsnURL *url.URL) (*Local, error) {
 	return &Local{
 		allPeers: map[string]dmesh.Peer{},
 	}, nil
