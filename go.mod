@@ -6,6 +6,7 @@ require (
 	github.com/dfuse-io/dgrpc v0.0.0-20200406214416-6271093e544c
 	github.com/dfuse-io/dmetrics v0.0.0-20200406214800-499fc7b320ab
 	github.com/dfuse-io/logging v0.0.0-20200406213449-45fc25dc6a8d
+	github.com/dfuse-io/pbgo v0.0.6-0.20200602201455-99986ef5a09d // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
