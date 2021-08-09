@@ -1,4 +1,4 @@
-module github.com/dfuse-io/dmesh
+module github.com/streamingfast/dmesh
 
 go 1.13
 

@@ -17,7 +17,7 @@ package local
 import (
 	"testing"
 
-	"github.com/dfuse-io/dmesh"
+	"github.com/streamingfast/dmesh"
 	"github.com/stretchr/testify/assert"
 )
 

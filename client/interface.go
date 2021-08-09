@@ -18,7 +18,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/dfuse-io/dmesh"
+	"github.com/streamingfast/dmesh"
 )
 
 type Client interface {

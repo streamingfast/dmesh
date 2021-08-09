@@ -22,5 +22,5 @@ import (
 var zlog *zap.Logger
 
 func init() {
-	logging.Register("github.com/dfuse-io/dmesh/store/etcd", &zlog)
+	logging.Register("github.com/streamingfast/dmesh/store/etcd", &zlog)
 }

@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/dfuse-io/dgrpc"
-	"github.com/dfuse-io/dmesh"
+	"github.com/streamingfast/dmesh"
 	"go.uber.org/zap"
 )
 

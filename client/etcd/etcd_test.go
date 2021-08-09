@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dfuse-io/dmesh"
+	"github.com/streamingfast/dmesh"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

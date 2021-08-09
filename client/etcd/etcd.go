@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"github.com/dfuse-io/dgrpc"
-	"github.com/dfuse-io/dmesh"
-	"github.com/dfuse-io/dmesh/metrics"
+	"github.com/streamingfast/dmesh"
+	"github.com/streamingfast/dmesh/metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/namespace"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"

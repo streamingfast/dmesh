@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/dfuse-io/dmesh/client/etcd"
-	"github.com/dfuse-io/dmesh/client/local"
+	"github.com/streamingfast/dmesh/client/etcd"
+	"github.com/streamingfast/dmesh/client/local"
 )
 
 func New(dsnString string) (SearchClient, error) {
