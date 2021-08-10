@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/dgrpc"
+	"github.com/streamingfast/dgrpc"
 	"github.com/streamingfast/dmesh"
 	"github.com/streamingfast/dmesh/metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"

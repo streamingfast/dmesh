@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/dgrpc"
+	"github.com/streamingfast/dgrpc"
 	"github.com/streamingfast/dmesh"
 	"go.uber.org/zap"
 )

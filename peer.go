@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dfuse-io/dgrpc"
+	"github.com/streamingfast/dgrpc"
 	"google.golang.org/grpc"
 )
 
