@@ -4,10 +4,10 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.60.0 // indirect
-	github.com/dfuse-io/logging v0.0.0-20210518215502-2d920b2ad1f2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
-	github.com/streamingfast/dgrpc v0.0.0-20210810185305-905172f728e8
-	github.com/streamingfast/dmetrics v0.0.0-20210810205551-6071d7bae2cd
+	github.com/streamingfast/dgrpc v0.0.0-20210811180351-8646818518b2
+	github.com/streamingfast/dmetrics v0.0.0-20210811180524-8494aeb34447
+	github.com/streamingfast/logging v0.0.0-20210811175431-f3b44b61606a // indirect
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
