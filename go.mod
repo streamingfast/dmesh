@@ -7,7 +7,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/streamingfast/dgrpc v0.0.0-20210811180351-8646818518b2
 	github.com/streamingfast/dmetrics v0.0.0-20210811180524-8494aeb34447
-	github.com/streamingfast/logging v0.0.0-20210811175431-f3b44b61606a // indirect
+	github.com/streamingfast/logging v0.0.0-20210811175431-f3b44b61606a
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
